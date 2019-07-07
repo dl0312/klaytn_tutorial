@@ -1,4 +1,5 @@
 import Caver from 'caver-js'
+import { Spinner } from 'spin.js'
 
 const config = {
   rpcURL: 'https://api.baobab.klaytn.net:8651'
@@ -74,11 +75,12 @@ const App = {
   submitAnswer: async function() {},
 
   deposit: async function() {
+    var spinner = this.showSpinner()
     const walletInstance = this.getWallet()
     if (walletInstance) {
-      if ((await this.callOwner()) !== walletInstance.address) return
+      if ((await this.callOwner()) - walletInstance.address !== 0) return
       else {
-        let amount = $('#amount').val()
+        var amount = $('#amount').val()
         if (amount) {
           agContract.methods
             .deposit()
@@ -92,6 +94,9 @@ const App = {
             })
             .once('receipt', receipt => {
               console.log(`(#${receipt.blockNumber})`, receipt)
+              spinner.stop()
+              alert(amount + ' KLAY를 컨트렉에 송금했습니다.')
+              location.reload()
             })
             .once('error', error => {
               alert(error.message)
@@ -106,7 +111,9 @@ const App = {
     return await agContract.methods.owner().call()
   },
 
-  callContractBalance: async function() {},
+  callContractBalance: async function() {
+    return await agContract.methods.getBalance().call()
+  },
 
   getWallet: function() {
     if (cav.klay.accounts.wallet.length) {
@@ -116,7 +123,6 @@ const App = {
 
   checkValidKeystore: function(keystore) {
     const parsedKeystore = JSON.parse(keystore)
-    console.log(parsedKeystore)
     const isValidKeystore =
       parsedKeystore.version &&
       parsedKeystore.id &&
@@ -147,6 +153,16 @@ const App = {
     $('#address').append(
       '<br>' + '<p>' + '내 계정 주소: ' + walletInstance.address + '</p>'
     )
+    $('#contractBalance').append(
+      '<p>' +
+        '이벤트 잔액: ' +
+        cav.utils.fromPeb(await this.callContractBalance(), 'KLAY') +
+        ' KLAY' +
+        '</p>'
+    )
+    if ((await this.callOwner()) - walletInstance.address === 0) {
+      $('#owner').show()
+    }
   },
 
   removeWallet: function() {
@@ -157,7 +173,10 @@ const App = {
 
   showTimer: function() {},
 
-  showSpinner: function() {},
+  showSpinner: function() {
+    var target = document.getElementById('spin')
+    return new Spinner(opts).spin(target)
+  },
 
   receiveKlay: function() {}
 }
