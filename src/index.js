@@ -5,6 +5,7 @@ const config = {
 }
 
 const cav = new Caver(config.rpcURL)
+const agContract = new cav.klay.Contract(DEPLOYED_ABI, DEPLOYED_ADDRESS)
 
 const App = {
   auth: {
@@ -72,13 +73,46 @@ const App = {
 
   submitAnswer: async function() {},
 
-  deposit: async function() {},
+  deposit: async function() {
+    const walletInstance = this.getWallet()
+    if (walletInstance) {
+      if ((await this.callOwner()) !== walletInstance.address) return
+      else {
+        let amount = $('#amount').val()
+        if (amount) {
+          agContract.methods
+            .deposit()
+            .send({
+              from: walletInstance.address,
+              gas: '250000',
+              value: cav.utils.toPeb(amount, 'KLAY')
+            })
+            .once('transactionHash', txHash => {
+              console.log(`txHash: ${txHash}`)
+            })
+            .once('receipt', receipt => {
+              console.log(`(#${receipt.blockNumber})`, receipt)
+            })
+            .once('error', error => {
+              alert(error.message)
+            })
+        }
+        return
+      }
+    }
+  },
 
-  callOwner: async function() {},
+  callOwner: async function() {
+    return await agContract.methods.owner().call()
+  },
 
   callContractBalance: async function() {},
 
-  getWallet: function() {},
+  getWallet: function() {
+    if (cav.klay.accounts.wallet.length) {
+      return cav.klay.accounts.wallet[0]
+    }
+  },
 
   checkValidKeystore: function(keystore) {
     const parsedKeystore = JSON.parse(keystore)
