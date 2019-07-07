@@ -82,7 +82,21 @@ const App = {
     this.showTimer()
   },
 
-  submitAnswer: async function() {},
+  submitAnswer: async function() {
+    const result = sessionStorage.getItem('result')
+    var answer = $('#answer').val()
+    if (answer === result) {
+      if (confirm('대다네~ 0.01 KLAY 받기')) {
+        if ((await this.callContractBalance()) >= 0.01) {
+          this.receiveKlay()
+        } else {
+          alert('죄송합니다. 컨트렉의 KLAY가 다 소모되었습니다.')
+        }
+      }
+    } else {
+      alert('땡!')
+    }
+  },
 
   deposit: async function() {
     var spinner = this.showSpinner()
@@ -203,7 +217,48 @@ const App = {
     return new Spinner(opts).spin(target)
   },
 
-  receiveKlay: function() {}
+  receiveKlay: function() {
+    var spinner = this.showSpinner()
+    const walletInstance = this.getWallet()
+
+    if (!walletInstance) return
+    agContract.methods
+      .transfer(cav.utils.toPeb('0.01', 'KLAY'))
+      .send({
+        from: walletInstance.address,
+        gas: '250000'
+      })
+      .then(function(receipt) {
+        console.log(receipt)
+        if (receipt.status) {
+          spinner.stop()
+          alert(
+            '0.01 KLAY가 ' +
+              walletInstance.address +
+              ' 계정으로 지급되었습니다.'
+          )
+        }
+        $('#transaction').html('')
+        $('#transaction').append(
+          `<p><a href="https://baobab.klaytnscope.com/tx/${
+            receipt.transactionHash
+          }" target="_blank">클레이튼 Scope에서 트랜젝션 확인</a></p>`
+        )
+        return agContract.methods
+          .getBalance()
+          .call()
+          .then(function(balance) {
+            $('#contractBalance').html('')
+            $('#contractBalance').append(
+              '<p>' +
+                '이벤트 잔액: ' +
+                cav.utils.fromPeb(balance, 'KLAY') +
+                ' KLAY' +
+                '</p>'
+            )
+          })
+      })
+  }
 }
 
 window.App = App
