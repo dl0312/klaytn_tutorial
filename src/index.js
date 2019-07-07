@@ -79,6 +79,7 @@ const App = {
     $('#num2').text(num2)
     $('#question').show()
     document.querySelector('#answer').focus()
+    this.showTimer()
   },
 
   submitAnswer: async function() {},
@@ -181,7 +182,21 @@ const App = {
     this.reset()
   },
 
-  showTimer: function() {},
+  showTimer: function() {
+    var seconds = 3
+    $('#timer').text(seconds)
+
+    var interval = setInterval(() => {
+      $('#timer').text(--seconds)
+      if (seconds <= 0) {
+        $('#timer').text('')
+        $('#answer').val('')
+        $('#question').hide()
+        $('#start').show()
+        clearInterval(interval)
+      }
+    }, 1000)
+  },
 
   showSpinner: function() {
     var target = document.getElementById('spin')
