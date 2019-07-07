@@ -70,7 +70,16 @@ const App = {
     location.reload()
   },
 
-  generateNumbers: async function() {},
+  generateNumbers: async function() {
+    var num1 = Math.floor(Math.random() * 50 + 10)
+    var num2 = Math.floor(Math.random() * 50 + 10)
+    sessionStorage.setItem('result', num1 + num2)
+    $('#start').hide()
+    $('#num1').text(num1)
+    $('#num2').text(num2)
+    $('#question').show()
+    document.querySelector('#answer').focus()
+  },
 
   submitAnswer: async function() {},
 
@@ -150,6 +159,7 @@ const App = {
     $('#loginModal').modal('hide')
     $('#login').hide()
     $('#logout').show()
+    $('#game').show()
     $('#address').append(
       '<br>' + '<p>' + '내 계정 주소: ' + walletInstance.address + '</p>'
     )
