@@ -12,7 +12,17 @@ const App = {
     keystore: '',
     password: ''
   },
-  start: async function() {},
+  start: async function() {
+    const walletFromSession = sessionStorage.getItem('walletInstance')
+    if (walletFromSession) {
+      try {
+        cav.klay.accounts.wallet.add(JSON.parse(walletFromSession))
+        this.changeUI(JSON.parse(walletFromSession))
+      } catch (err) {
+        sessionStorage.removeItem('walletInstance')
+      }
+    }
+  },
 
   handleImport: async function() {
     console.log(event)
