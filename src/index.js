@@ -1,7 +1,7 @@
 import Caver from 'caver-js'
 
 const config = {
-  rpcURL: 'http://api.baobab.klaytn.net:8651'
+  rpcURL: 'https://api.baobab.klaytn.net:8651'
 }
 
 const cav = new Caver(config.rpcURL)
@@ -39,9 +39,24 @@ const App = {
     this.auth.password = event.target.value
   },
 
-  handleLogin: async function() {},
+  handleLogin: async function() {
+    if (this.auth.accessType === 'keystore') {
+      try {
+        const privateKey = cav.klay.accounts.decrypt(
+          this.auth.keystore,
+          this.auth.password
+        ).privateKey
+        this.integrateWallet(privateKey)
+      } catch (err) {
+        $('message').text('비밀번호가 일치하지 않습니다.')
+      }
+    }
+  },
 
-  handleLogout: async function() {},
+  handleLogout: async function() {
+    this.removeWallet()
+    location.reload()
+  },
 
   generateNumbers: async function() {},
 
@@ -67,13 +82,34 @@ const App = {
     return isValidKeystore
   },
 
-  integrateWallet: function(privateKey) {},
+  integrateWallet: function(privateKey) {
+    const walletInstance = cav.klay.accounts.privateKeyToAccount(privateKey)
+    cav.klay.accounts.wallet.add(walletInstance)
+    sessionStorage.setItem('walletInstance', JSON.stringify(walletInstance))
+    this.changeUI(walletInstance)
+  },
 
-  reset: function() {},
+  reset: function() {
+    this.auth = {
+      keystore: '',
+      password: ''
+    }
+  },
 
-  changeUI: async function(walletInstance) {},
+  changeUI: async function(walletInstance) {
+    $('#loginModal').modal('hide')
+    $('#login').hide()
+    $('#logout').show()
+    $('#address').append(
+      '<br>' + '<p>' + '내 계정 주소: ' + walletInstance.address + '</p>'
+    )
+  },
 
-  removeWallet: function() {},
+  removeWallet: function() {
+    cav.klay.accounts.wallet.clear()
+    sessionStorage.removeItem('walletInstance')
+    this.reset()
+  },
 
   showTimer: function() {},
 
